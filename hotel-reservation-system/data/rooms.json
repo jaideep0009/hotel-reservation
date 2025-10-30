@@ -1,0 +1,20 @@
+[
+  {
+    "id": "7c6635ff-2ebe-48a0-9d46-e8eb1a425d6f",
+    "type": "Single",
+    "pricePerNight": 1500.0,
+    "available": true
+  },
+  {
+    "id": "221f4821-18c3-47f4-9446-5bd66835ee81",
+    "type": "Double",
+    "pricePerNight": 2500.0,
+    "available": true
+  },
+  {
+    "id": "38ba1167-01b4-4ecf-9c24-9374df964c1b",
+    "type": "Suite",
+    "pricePerNight": 5000.0,
+    "available": true
+  }
+]
