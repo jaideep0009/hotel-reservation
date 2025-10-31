@@ -2,7 +2,13 @@ package storage;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 import model.Customer;
 import model.Reservation;
 import model.Room;
@@ -13,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * File-based persistence using JSON (Gson).
+ * File-based persistence using JSON 
  * Each list is saved to a separate JSON file inside /data folder.
  */
 public class DataStore {
@@ -22,7 +28,23 @@ public class DataStore {
     private static final String CUSTOMERS_FILE = DATA_DIR + "customers.json";
     private static final String RESERVATIONS_FILE = DATA_DIR + "reservations.json";
 
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson gson = new GsonBuilder()
+            .setPrettyPrinting()
+            .registerTypeAdapter(LocalDate.class, new TypeAdapter<LocalDate>() {
+                @Override
+                public void write(JsonWriter out, LocalDate value) throws IOException {
+                    if (value == null) out.nullValue();
+                    else out.value(value.format(DateTimeFormatter.ISO_LOCAL_DATE));
+                }
+
+                @Override
+                public LocalDate read(JsonReader in) throws IOException {
+                    String str = in.nextString();
+                    return LocalDate.parse(str, DateTimeFormatter.ISO_LOCAL_DATE);
+                }
+            })
+            .create();
+
 
     static {
         File dir = new File(DATA_DIR);
@@ -57,16 +79,21 @@ public class DataStore {
 
     // ---------- Helper methods ----------
     private static <T> List<T> readList(String path, Type type) {
-        try (Reader reader = new FileReader(path)) {
+        File file = new File(path);
+        if (!file.exists() || file.length() == 0) {
+            return new ArrayList<>();
+        }
+
+        try (Reader reader = new FileReader(file)) {
             List<T> list = gson.fromJson(reader, type);
             return list != null ? list : new ArrayList<>();
-        } catch (FileNotFoundException e) {
-            return new ArrayList<>();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (com.google.gson.JsonSyntaxException | IOException e) {
+            System.err.println(" Warning: JSON file corrupted or empty: " + path + ". Resetting it.");
             return new ArrayList<>();
         }
     }
+
+    
 
     private static <T> void writeList(String path, List<T> list) {
         try (Writer writer = new FileWriter(path)) {
